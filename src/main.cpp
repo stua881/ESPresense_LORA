@@ -438,6 +438,38 @@ void reconnect(TimerHandle_t xTimer) {
     mqttClient.connect();
 }
 
+void handleMeshtasticSync() {
+    while (Serial2.available()) {
+        uint8_t cmd = Serial2.read();
+
+        if cmd == 0x20) { //CLEAR_ALL
+            // Access the clobal fingerprint object
+            fingerprint.clear();
+            Serial.println("SYNC: Wyped Clean");
+        }
+
+        else if (cmd == 0x31) { // ADD_IRK (16 Bytes)
+            if (Serial2.available() >= 16) {
+                uint8_t rawKey[16];
+                Serial2.readBytes(rawKey,16);
+
+                // DIRECT INJECTION: Puts data into the standard engine
+                fingerprint.addRawIrk(rawKey);
+
+                Serial.println("SYNC: IRK Added to list");
+            }
+        }
+
+        // Keeping 6 Byte Logic
+        else if (cdm == 0x32) { //ADD_MAC (6 Bytes)
+            if (Serial2.available() >= 6) {
+                uint8_t rawKey[6];
+                Serial2.readBytes(rawKey, 6);
+                fingerprint.addRawIrk(rawKey);
+                Serial.println("SYNC: MAC Added to list");
+            }
+        }
+    }
 void connectToMqtt() {
     reconnectTimer = xTimerCreate("reconnectionTimer", pdMS_TO_TICKS(3000), pdTRUE, (void *)nullptr, reconnect);
     mqttClient.onConnect(onMqttConnect);
