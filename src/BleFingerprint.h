@@ -115,6 +115,15 @@ class BleFingerprint {
     void setReport(const QueryReport &report) { queryReport = std::unique_ptr<QueryReport>(new QueryReport{report}); };
     void clearReport() { queryReport.reset(); };
 
+    void addRawIrk(uint8_t* keyBytes) {
+        // This relies on however ESPresense internally stores IRKs.
+        // Usually it's a vector of a struct or class. 
+        // This is a generalized implementation:
+        Irk newIrk;
+        memcpy(newIrk.key, keyBytes, 16);
+        this->irks.push_back(newIrk); 
+    }
+
     unsigned int getSeenCount() {
         auto sc = seenCount - lastSeenCount;
         lastSeenCount = seenCount;
